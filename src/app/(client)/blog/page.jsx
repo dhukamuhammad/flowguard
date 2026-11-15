@@ -1,7 +1,6 @@
 import BlogHeroBanner from "./BlogHeroBanner";
 import BlogCatalogClient from "./BlogCatalogClient";
 import { supabase } from "@/lib/supabase";
-import { STATIC_BLOGS } from "@/data/staticBlogs";
 
 // Enable ISR so Blog page is served instantly from Edge cache
 export const revalidate = 60;
@@ -20,12 +19,12 @@ async function getPublishedBlogs() {
       .eq("status", 1)
       .order("created_at", { ascending: false });
 
-    if (error || !data || data.length === 0) {
-      return STATIC_BLOGS;
+    if (error || !data) {
+      return [];
     }
     return data;
   } catch {
-    return STATIC_BLOGS;
+    return [];
   }
 }
 

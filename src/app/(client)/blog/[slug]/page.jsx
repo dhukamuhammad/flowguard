@@ -4,14 +4,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, ArrowRight } from "lucide-react";
 import BlogCard from "../BlogCard";
 import { supabase } from "@/lib/supabase";
-import {
-  STATIC_BLOGS,
-  getStaticBlogBySlug,
-  getRelatedStaticBlogs,
-} from "@/data/staticBlogs";
 import { formatShortDate, stripHtml } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 async function getBlogBySlug(slug) {
   try {
@@ -20,14 +15,14 @@ async function getBlogBySlug(slug) {
       .select("id, title, slug, cover_image, description, status, created_at")
       .eq("slug", slug)
       .eq("status", 1)
-      .single();
+      .maybeSingle();
 
     if (error || !data) {
-      return getStaticBlogBySlug(slug);
+      return null;
     }
     return data;
   } catch {
-    return getStaticBlogBySlug(slug);
+    return null;
   }
 }
 
@@ -41,12 +36,12 @@ async function getRelatedBlogs(currentBlog, limit = 3) {
       .order("created_at", { ascending: false })
       .limit(limit);
 
-    if (error || !data || data.length === 0) {
-      return getRelatedStaticBlogs(currentBlog, limit);
+    if (error || !data) {
+      return [];
     }
     return data;
   } catch {
-    return getRelatedStaticBlogs(currentBlog, limit);
+    return [];
   }
 }
 
