@@ -17,6 +17,72 @@ import BlogDescriptionEditor from "./BlogDescriptionEditor";
 import { notify } from "@/components/common/AppToaster";
 import { invalidateAdminCache } from "@/lib/adminCache";
 
+/**
+ * Client-side browser canvas optimization for fast upload.
+ * Scales large photos to max 1600px and converts to WebP (~150-250KB).
+ */
+async function optimizeImageForUpload(file) {
+  if (
+    !file.type.startsWith("image/") ||
+    file.type.includes("svg") ||
+    file.type.includes("gif") ||
+    file.size <= 300 * 1024
+  ) {
+    return file;
+  }
+
+  return new Promise((resolve) => {
+    const img = document.createElement("img");
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      img.src = e.target?.result;
+    };
+
+    img.onload = () => {
+      const maxDim = 1600;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob && blob.size < file.size) {
+            resolve(
+              new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), {
+                type: "image/webp",
+              })
+            );
+          } else {
+            resolve(file);
+          }
+        },
+        "image/webp",
+        0.85
+      );
+    };
+
+    img.onerror = () => resolve(file);
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function BlogForm({ blogToEdit = null }) {
   const router = useRouter();
   const isEditing = Boolean(blogToEdit);
@@ -27,6 +93,7 @@ export default function BlogForm({ blogToEdit = null }) {
     Boolean(blogToEdit?.slug)
   );
   const [coverImage, setCoverImage] = useState(blogToEdit?.cover_image || "");
+  const [localPreview, setLocalPreview] = useState("");
   const [description, setDescription] = useState(
     blogToEdit?.description || ""
   );
@@ -57,17 +124,23 @@ export default function BlogForm({ blogToEdit = null }) {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      notify.error("Image size must be 5MB or less.");
+    if (file.size > 10 * 1024 * 1024) {
+      notify.error("Image size must be 10MB or less.");
       return;
     }
 
+    // 1. Instant 0ms client preview
+    const objectUrl = URL.createObjectURL(file);
+    setLocalPreview(objectUrl);
+    setIsUploading(true);
+    setFormError("");
+
     try {
-      setIsUploading(true);
-      setFormError("");
+      // 2. Fast in-browser compression to lightweight WebP
+      const optimizedFile = await optimizeImageForUpload(file);
 
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", optimizedFile);
       formData.append("folder", "blogs");
 
       const res = await fetch("/api/upload", {
@@ -81,8 +154,10 @@ export default function BlogForm({ blogToEdit = null }) {
       }
 
       setCoverImage(data.imageUrl);
+      setLocalPreview("");
       notify.success("Cover image uploaded successfully.");
     } catch (err) {
+      setLocalPreview("");
       const msg = err.message || "Failed to upload cover image.";
       setFormError(msg);
       notify.error(msg);
@@ -94,6 +169,11 @@ export default function BlogForm({ blogToEdit = null }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (isUploading) {
+      notify.error("Please wait for cover image to finish uploading.");
+      return;
+    }
 
     const cleanTitle = title.trim();
     const cleanSlug = slug.trim() || slugify(cleanTitle);
@@ -185,7 +265,7 @@ export default function BlogForm({ blogToEdit = null }) {
 
           <button
             type="submit"
-            disabled={isSaving}
+            disabled={isSaving || isUploading}
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#E53935] hover:bg-[#d32f2f] text-white rounded-[6px] text-xs font-semibold shadow-xs disabled:opacity-60 transition-all cursor-pointer"
           >
             {isSaving ? (
@@ -256,45 +336,56 @@ export default function BlogForm({ blogToEdit = null }) {
           </label>
 
           <div className="flex-1 flex flex-col justify-center">
-            {coverImage ? (
+            {localPreview || coverImage ? (
               <div className="relative aspect-[16/10] w-full rounded-[6px] overflow-hidden border border-gray-200 bg-gray-50 group">
                 <Image
-                  src={coverImage}
+                  src={localPreview || coverImage}
                   alt="Blog Cover Preview"
                   fill
                   sizes="350px"
-                  unoptimized={coverImage.startsWith("http")}
+                  unoptimized={Boolean(
+                    localPreview ||
+                      (coverImage &&
+                        (coverImage.startsWith("http") ||
+                          coverImage.startsWith("blob:")))
+                  )}
                   className="object-cover"
                 />
-                <button
-                  type="button"
-                  onClick={() => setCoverImage("")}
-                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 hover:bg-black text-white cursor-pointer transition-colors"
-                  title="Remove Image"
-                >
-                  <X size={14} />
-                </button>
+
+                {/* Uploading Spinner Overlay */}
+                {isUploading && (
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2 text-white z-10">
+                    <Loader2 size={24} className="animate-spin text-[#E53935]" />
+                    <span className="text-xs font-semibold">
+                      Optimizing &amp; uploading...
+                    </span>
+                  </div>
+                )}
+
+                {/* Remove button (hidden while uploading) */}
+                {!isUploading && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCoverImage("");
+                      setLocalPreview("");
+                    }}
+                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 hover:bg-black text-white cursor-pointer transition-colors z-20"
+                    title="Remove Image"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
             ) : (
               <label className="border-2 border-dashed border-gray-300 hover:border-[#E53935] rounded-[6px] p-4 sm:p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-colors bg-gray-50/50 hover:bg-red-50/20 h-full min-h-[140px]">
-                {isUploading ? (
-                  <>
-                    <Loader2 size={24} className="animate-spin text-[#E53935] mb-2" />
-                    <span className="text-xs font-semibold text-gray-600">
-                      Uploading image...
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <UploadCloud size={26} className="text-gray-400 mb-1.5" />
-                    <span className="text-xs font-semibold text-gray-700">
-                      Click to upload cover image
-                    </span>
-                    <span className="text-[10px] text-gray-400 mt-0.5">
-                      PNG, JPG, WebP up to 5MB
-                    </span>
-                  </>
-                )}
+                <UploadCloud size={26} className="text-gray-400 mb-1.5" />
+                <span className="text-xs font-semibold text-gray-700">
+                  Click to upload cover image
+                </span>
+                <span className="text-[10px] text-gray-400 mt-0.5">
+                  PNG, JPG, WebP (auto-optimized)
+                </span>
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
