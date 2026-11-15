@@ -5,13 +5,16 @@ import { useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import AdminNavbar from "@/components/admin/AdminNavbar";
 import BlogForm from "@/components/admin/blog/BlogForm";
+import { getCachedAdminData, fetchAdminData } from "@/lib/adminCache";
 
 function BlogFormContent() {
   const searchParams = useSearchParams();
   const editId = searchParams.get("id");
 
-  const [loading, setLoading] = useState(Boolean(editId));
-  const [blogToEdit, setBlogToEdit] = useState(null);
+  const cachedBlog = editId ? getCachedAdminData(`/api/blogs/${editId}`) : null;
+
+  const [loading, setLoading] = useState(Boolean(editId && !cachedBlog?.blog));
+  const [blogToEdit, setBlogToEdit] = useState(cachedBlog?.blog || null);
   const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
@@ -21,12 +24,11 @@ function BlogFormContent() {
 
     async function fetchBlog() {
       try {
-        const res = await fetch(`/api/blogs/${editId}`, { cache: "no-store" });
-        const data = await res.json();
+        const data = await fetchAdminData(`/api/blogs/${editId}`);
         if (!active) return;
 
-        if (!res.ok || !data.success || !data.blog) {
-          throw new Error(data.error || "Blog post not found.");
+        if (!data?.success || !data?.blog) {
+          throw new Error(data?.error || "Blog post not found.");
         }
 
         setBlogToEdit(data.blog);

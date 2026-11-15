@@ -104,6 +104,7 @@ export default function BlogTable({
 
                       <Link
                         href={`/admin/blog/addblog?id=${item.id}`}
+                        prefetch={true}
                         className="p-1.5 text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 rounded-[4px] transition-colors"
                         title="Edit Article"
                       >

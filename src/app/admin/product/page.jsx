@@ -342,6 +342,7 @@ function AdminProductsContent() {
 
             <Link
               href="/admin/product/addproduct"
+              prefetch={true}
               className="flex items-center gap-1.5 bg-[#E53935] hover:bg-[#d32f2f] text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-[6px] shadow-xs transition-all ml-auto"
             >
               <Plus size={15} />

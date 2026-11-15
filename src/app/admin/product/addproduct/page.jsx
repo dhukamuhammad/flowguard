@@ -7,7 +7,11 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import AdminNavbar from "@/components/admin/AdminNavbar";
 import ProductForm from "@/components/admin/product/ProductForm";
 import { notify } from "@/components/common/AppToaster";
-import { invalidateAdminCache } from "@/lib/adminCache";
+import {
+  getCachedAdminData,
+  fetchAdminData,
+  invalidateAdminCache,
+} from "@/lib/adminCache";
 
 function AddProductContent() {
   const router = useRouter();
@@ -15,9 +19,18 @@ function AddProductContent() {
   const editId = searchParams.get("id");
   const isEditing = Boolean(editId);
 
-  const [categories, setCategories] = useState([]);
-  const [productToEdit, setProductToEdit] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const cachedCats = getCachedAdminData("/api/categories");
+  const cachedProd = editId ? getCachedAdminData(`/api/products/${editId}`) : null;
+
+  const [categories, setCategories] = useState(
+    cachedCats?.categories || []
+  );
+  const [productToEdit, setProductToEdit] = useState(
+    cachedProd?.product || null
+  );
+  const [loading, setLoading] = useState(
+    Boolean(editId ? !cachedProd?.product : !cachedCats?.categories?.length)
+  );
   const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -27,25 +40,20 @@ function AddProductContent() {
 
     async function loadInitialData() {
       try {
-        const requests = [fetch("/api/categories", { cache: "no-store" })];
-        if (editId) {
-          requests.push(fetch(`/api/products/${editId}`, { cache: "no-store" }));
-        }
-
-        const responses = await Promise.all(requests);
-        const catData = await responses[0].json();
+        const catData = await fetchAdminData("/api/categories");
         if (!active) return;
 
         setLoadError("");
-        setCategories(catData.success ? catData.categories || [] : []);
+        if (catData?.success && catData.categories) {
+          setCategories(catData.categories);
+        }
 
         if (editId) {
-          const prodRes = responses[1];
-          const prodData = await prodRes.json();
+          const prodData = await fetchAdminData(`/api/products/${editId}`);
           if (!active) return;
 
-          if (!prodRes.ok || !prodData.success) {
-            throw new Error(prodData.error || "Product not found.");
+          if (!prodData?.success || !prodData?.product) {
+            throw new Error(prodData?.error || "Product not found.");
           }
           setProductToEdit(prodData.product);
         } else {

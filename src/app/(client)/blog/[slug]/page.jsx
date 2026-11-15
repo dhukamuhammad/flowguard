@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,7 +9,29 @@ import { formatShortDate, stripHtml } from "@/lib/utils";
 
 export const revalidate = 60;
 
-async function getBlogBySlug(slug) {
+/**
+ * Pre-generate static paths for all published blogs at build/ISR time.
+ * This guarantees instant 0ms edge delivery when clicking "Read More".
+ */
+export async function generateStaticParams() {
+  try {
+    const { data } = await supabase
+      .from("blogs")
+      .select("slug")
+      .eq("status", 1);
+
+    return (data || []).map((blog) => ({
+      slug: blog.slug,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * React cache deduplicates the Supabase query between generateMetadata and BlogDetailPage.
+ */
+const getBlogBySlug = cache(async (slug) => {
   try {
     const { data, error } = await supabase
       .from("blogs")
@@ -24,7 +47,7 @@ async function getBlogBySlug(slug) {
   } catch {
     return null;
   }
-}
+});
 
 async function getRelatedBlogs(currentBlog, limit = 3) {
   try {

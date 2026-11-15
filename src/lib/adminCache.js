@@ -13,6 +13,15 @@ export function getCachedAdminData(url) {
   return isFresh ? entry.data : null;
 }
 
+export function setCachedAdminData(url, data, ttl = DEFAULT_TTL_MS) {
+  if (typeof window === "undefined") return;
+  memoryCache.set(url, {
+    data,
+    timestamp: Date.now(),
+    ttl,
+  });
+}
+
 /**
  * Fetches data with client-side caching.
  * If fresh cached data exists, returns it immediately with zero network latency.
@@ -34,6 +43,28 @@ export async function fetchAdminData(url, { ttl = DEFAULT_TTL_MS, force = false 
       timestamp: now,
       ttl,
     });
+
+    // Sub-cache individual products so edit product form opens in 0ms
+    if (url.startsWith("/api/products") && Array.isArray(data.products)) {
+      data.products.forEach((p) => {
+        memoryCache.set(`/api/products/${p.id}`, {
+          data: { success: true, product: p },
+          timestamp: now,
+          ttl,
+        });
+      });
+    }
+
+    // Sub-cache individual blogs so edit blog form opens in 0ms
+    if (url.startsWith("/api/blogs") && Array.isArray(data.blogs)) {
+      data.blogs.forEach((b) => {
+        memoryCache.set(`/api/blogs/${b.id}`, {
+          data: { success: true, blog: b },
+          timestamp: now,
+          ttl,
+        });
+      });
+    }
   }
 
   return data;

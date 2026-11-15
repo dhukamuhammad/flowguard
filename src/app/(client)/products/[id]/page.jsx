@@ -5,6 +5,28 @@ import { getActiveCatalogData, resolveCatalogSelection } from "@/lib/catalog";
 
 export const revalidate = 60;
 
+/**
+ * Pre-generate static routes for all active products & categories
+ * so clicking any product in the catalog is instantaneous.
+ */
+export async function generateStaticParams() {
+  try {
+    const { categories, products } = await getActiveCatalogData();
+    const params = [];
+    (products || []).forEach((p) => {
+      if (p.slug) params.push({ id: p.slug });
+      params.push({ id: String(p.id) });
+    });
+    (categories || []).forEach((c) => {
+      if (c.slug) params.push({ id: c.slug });
+      params.push({ id: String(c.id) });
+    });
+    return params;
+  } catch {
+    return [];
+  }
+}
+
 export async function generateMetadata({ params }) {
   const resolvedParams = await params;
   const { categories, products } = await getActiveCatalogData();

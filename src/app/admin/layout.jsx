@@ -28,6 +28,9 @@ export default function AdminRootLayout({ children }) {
 
   return (
     <AdminLayoutContext.Provider value={{ mobileOpen, setMobileOpen }}>
+      {/* Preconnect to TinyMCE cloud CDN so rich text editor warms up ahead of time */}
+      <link rel="preconnect" href="https://cdn.tiny.cloud" crossOrigin="anonymous" />
+      <link rel="dns-prefetch" href="https://cdn.tiny.cloud" />
       <div className={`flex h-screen overflow-hidden bg-[#F8FAFC] text-gray-900 ${outfit.className}`}>
         <AdminSidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
         <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden">

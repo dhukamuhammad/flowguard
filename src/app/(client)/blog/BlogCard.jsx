@@ -16,6 +16,7 @@ export default function BlogCard({ blog }) {
       {/* Cover Image (Clean, No badge) */}
       <Link
         href={`/blog/${blog.slug}`}
+        prefetch={true}
         className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100 block"
       >
         <Image
@@ -38,7 +39,7 @@ export default function BlogCard({ blog }) {
           </div>
 
           {/* Title */}
-          <Link href={`/blog/${blog.slug}`} className="block">
+          <Link href={`/blog/${blog.slug}`} prefetch={true} className="block">
             <h3 className="text-base sm:text-[17px] font-bold text-[#1A1A1A] leading-snug line-clamp-2 group-hover:text-[#E53935] transition-colors">
               {blog.title}
             </h3>
@@ -54,6 +55,7 @@ export default function BlogCard({ blog }) {
         <div className="pt-3 border-t border-gray-100 flex items-center justify-end">
           <Link
             href={`/blog/${blog.slug}`}
+            prefetch={true}
             className="inline-flex items-center gap-1.5 text-xs font-bold text-[#E53935] group-hover:gap-2 transition-all"
           >
             <span>Read More</span>

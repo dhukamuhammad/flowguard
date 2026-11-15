@@ -132,6 +132,7 @@ export default function ProductTable({
                       )}
                       <Link
                         href={`/admin/product/addproduct?id=${item.id}`}
+                        prefetch={true}
                         className="p-1.5 text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 rounded-[4px] transition-colors"
                         title="Edit Seal Model"
                       >
