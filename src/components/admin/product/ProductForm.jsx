@@ -79,6 +79,72 @@ function createInitialForm(categories, productToEdit) {
   };
 }
 
+/**
+ * In-browser canvas compressor to resize large images (e.g. 5-10MB phone camera shots)
+ * to crisp, web-optimized WebP under 1600px. Completes in ~50ms.
+ */
+async function optimizeImageForUpload(file) {
+  if (
+    !file.type.startsWith("image/") ||
+    file.type.includes("svg") ||
+    file.type.includes("gif") ||
+    file.size <= 350 * 1024
+  ) {
+    return file;
+  }
+
+  return new Promise((resolve) => {
+    const img = document.createElement("img");
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      img.src = e.target?.result;
+    };
+
+    img.onload = () => {
+      const maxDim = 1600;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob && blob.size < file.size) {
+            resolve(
+              new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), {
+                type: "image/webp",
+              })
+            );
+          } else {
+            resolve(file);
+          }
+        },
+        "image/webp",
+        0.85
+      );
+    };
+
+    img.onerror = () => resolve(file);
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function ProductForm({
   categories = [],
   productToEdit = null,
@@ -93,6 +159,7 @@ export default function ProductForm({
     Boolean(productToEdit)
   );
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadingItems, setUploadingItems] = useState([]);
   const [localError, setLocalError] = useState("");
 
   const handleTitleChange = (val) => {
@@ -112,45 +179,63 @@ export default function ProductForm({
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
+    // 1. Immediately create optimistic client previews for ALL selected files
+    const newQueueItems = files.map((file) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      previewUrl: URL.createObjectURL(file),
+      file,
+    }));
+
+    setUploadingItems((prev) => [...prev, ...newQueueItems]);
     setIsUploading(true);
     setLocalError("");
+    e.target.value = "";
 
     try {
-      const uploadedUrls = [];
-      for (const file of files) {
-        const body = new FormData();
-        body.append("file", file);
-        const res = await fetch("/api/upload", { method: "POST", body });
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || `Failed to upload ${file.name}`);
-        }
-        uploadedUrls.push(data.imageUrl);
-      }
+      // 2. Upload ALL files in parallel simultaneously
+      const uploadPromises = newQueueItems.map(async (queueItem) => {
+        try {
+          const optimizedFile = await optimizeImageForUpload(queueItem.file);
+          const body = new FormData();
+          body.append("file", optimizedFile);
 
-      setFormData((prev) => ({
-        ...prev,
-        images: [...prev.images, ...uploadedUrls],
-      }));
-      notify.success(
-        `${uploadedUrls.length} image${uploadedUrls.length > 1 ? "s" : ""} uploaded`
-      );
+          const res = await fetch("/api/upload", { method: "POST", body });
+          const data = await res.json();
+
+          if (!res.ok || !data.success || !data.imageUrl) {
+            throw new Error(data?.error || `Failed to upload ${queueItem.file.name}`);
+          }
+
+          setFormData((prev) => ({
+            ...prev,
+            images: [...prev.images, data.imageUrl],
+          }));
+
+          return { success: true, id: queueItem.id };
+        } catch (err) {
+          notify.error(err.message || `Upload failed for ${queueItem.file.name}`);
+          return { success: false, id: queueItem.id };
+        } finally {
+          setUploadingItems((prev) => prev.filter((item) => item.id !== queueItem.id));
+          URL.revokeObjectURL(queueItem.previewUrl);
+        }
+      });
+
+      const results = await Promise.all(uploadPromises);
+      const successfulCount = results.filter((r) => r.success).length;
+
+      if (successfulCount > 0) {
+        notify.success(
+          `${successfulCount} image${successfulCount > 1 ? "s" : ""} uploaded`
+        );
+      }
     } catch (err) {
       const msg = err.message || "Image upload failed.";
       setLocalError(msg);
       notify.error(msg);
     } finally {
       setIsUploading(false);
-      e.target.value = "";
     }
-  };
-
-  const addImageUrl = (url) => {
-    setFormData((prev) =>
-      prev.images.includes(url)
-        ? prev
-        : { ...prev, images: [...prev.images, url] }
-    );
   };
 
   const removeImage = (index) => {
@@ -461,13 +546,6 @@ export default function ProductForm({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => addImageUrl("/client/product/Seals.png")}
-              className="px-2.5 py-1.5 text-xs rounded-[6px] border border-gray-300 bg-gray-50 text-gray-700 hover:border-[#E53935] hover:text-[#E53935] cursor-pointer"
-            >
-              + Preset Seal
-            </button>
             <label className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#E53935] hover:bg-[#d32f2f] text-white text-xs font-semibold rounded-[6px] cursor-pointer transition-colors">
               {isUploading ? (
                 <Loader2 size={14} className="animate-spin" />
@@ -487,7 +565,7 @@ export default function ProductForm({
           </div>
         </div>
 
-        {formData.images.length === 0 ? (
+        {formData.images.length === 0 && uploadingItems.length === 0 ? (
           <div className="py-6 text-center bg-gray-50 border border-dashed border-gray-300 rounded-[6px] text-xs text-gray-500">
             No images added yet. Click &quot;Upload Photos&quot; to upload from
             your computer.
@@ -533,6 +611,27 @@ export default function ProductForm({
                 >
                   <X size={11} />
                 </button>
+              </div>
+            ))}
+
+            {/* Instant Previews for files currently uploading */}
+            {uploadingItems.map((item) => (
+              <div
+                key={item.id}
+                className="relative w-24 h-24 rounded-[6px] bg-gray-100 border-2 border-dashed border-[#E53935]/60 p-1.5 flex items-center justify-center overflow-hidden animate-pulse"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={item.previewUrl}
+                  alt="Uploading preview"
+                  className="object-contain w-full h-full p-1 opacity-60"
+                />
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex flex-col items-center justify-center gap-1 text-white">
+                  <Loader2 size={16} className="animate-spin text-[#E53935]" />
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-white">
+                    Uploading
+                  </span>
+                </div>
               </div>
             ))}
           </div>
