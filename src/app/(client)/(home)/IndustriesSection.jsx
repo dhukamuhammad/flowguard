@@ -11,15 +11,15 @@ export default function IndustriesSection() {
       description:
         "Lorem ipsum dolor sit amet consectetur. Vel fringilla pharetra a at. Pretium placerat magnis dui volutpat porttitor. Rhoncus fringilla dui leo in.",
       image: "/client/home/oil-gas.jpg",
-      link: "/industries/oil-and-gas",
+      link: "/industries",
     },
     {
       id: 2,
       title: "PETROCHEMICAL",
       description:
         "Lorem ipsum dolor sit amet consectetur. Vel fringilla pharetra a at. Pretium placerat magnis dui volutpat porttitor. Rhoncus fringilla dui leo in.",
-      image: "/client/home/petrochemical.jpg",
-      link: "/industries/petrochemical",
+      image: "/client/home/Petrochemical.jpg",
+      link: "/industries",
     },
     {
       id: 3,
@@ -27,7 +27,7 @@ export default function IndustriesSection() {
       description:
         "Lorem ipsum dolor sit amet consectetur. Vel fringilla pharetra a at. Pretium placerat magnis dui volutpat porttitor. Rhoncus fringilla dui leo in.",
       image: "/client/home/power-plants.jpg",
-      link: "/industries/power-plants",
+      link: "/industries",
     },
   ];
 

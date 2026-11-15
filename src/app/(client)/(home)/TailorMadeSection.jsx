@@ -89,7 +89,7 @@ export default function TailorMadeSection() {
           {/* Left Column: Featured Image - Rounded-[6px] */}
           <div className="lg:col-span-5 relative w-full min-h-[300px] sm:min-h-[360px] lg:min-h-full rounded-[6px] overflow-hidden shadow-lg bg-gray-100 flex-shrink-0">
             <Image
-              src="/client/home/tailor-made.jpg"
+              src="/client/home/Tailor-Made.jpg"
               alt="Tailor-Made Industrial Solutions Facility"
               fill
               sizes="(max-width: 1024px) 100vw, 45vw"

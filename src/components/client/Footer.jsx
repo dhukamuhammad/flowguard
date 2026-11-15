@@ -80,54 +80,12 @@ export default function Footer() {
               Our Services
             </h4>
             <ul className="space-y-3 text-xs sm:text-[13px] text-[#9CA3AF]">
-              <li>
-                <Link
-                  href="/manufacturing/cnc-machining"
-                  className="hover:text-white transition-colors"
-                >
-                  CNC Machining
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/manufacturing"
-                  className="hover:text-white transition-colors"
-                >
-                  Custom Machining & Fabrication
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/manufacturing"
-                  className="hover:text-white transition-colors"
-                >
-                  Milling Services
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/manufacturing"
-                  className="hover:text-white transition-colors"
-                >
-                  Turning Services
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/manufacturing"
-                  className="hover:text-white transition-colors"
-                >
-                  Prototype Manufacturing
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/manufacturing"
-                  className="hover:text-white transition-colors"
-                >
-                  Production Machining
-                </Link>
-              </li>
+              <li>CNC Machining</li>
+              <li>Custom Machining &amp; Fabrication</li>
+              <li>Milling Services</li>
+              <li>Turning Services</li>
+              <li>Prototype Manufacturing</li>
+              <li>Production Machining</li>
             </ul>
           </div>
 
@@ -137,54 +95,12 @@ export default function Footer() {
               Industries We Serve
             </h4>
             <ul className="space-y-3 text-xs sm:text-[13px] text-[#9CA3AF]">
-              <li>
-                <Link
-                  href="/industries/oil-and-gas"
-                  className="hover:text-white transition-colors"
-                >
-                  Oil & Gas
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/industries/petrochemical"
-                  className="hover:text-white transition-colors"
-                >
-                  Petrochemical
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/industries/power-plants"
-                  className="hover:text-white transition-colors"
-                >
-                  Power Plants
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/industries"
-                  className="hover:text-white transition-colors"
-                >
-                  Water Treatment
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/industries"
-                  className="hover:text-white transition-colors"
-                >
-                  Pharmaceuticals
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/industries"
-                  className="hover:text-white transition-colors"
-                >
-                  Food & Beverage
-                </Link>
-              </li>
+              <li>Oil &amp; Gas</li>
+              <li>Petrochemical</li>
+              <li>Power Plants</li>
+              <li>Water Treatment</li>
+              <li>Pharmaceuticals</li>
+              <li>Food &amp; Beverage</li>
             </ul>
           </div>
 
@@ -223,24 +139,9 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom Copyright & Legal Links Bar */}
-        <div className="border-t border-white/10 py-6 sm:py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#9CA3AF]">
+        {/* Bottom Copyright Bar */}
+        <div className="border-t border-white/10 py-6 sm:py-8 flex items-center justify-center text-center text-xs text-[#9CA3AF]">
           <p>© 2026 Rakshit bhatol Inc. All Rights Reserved.</p>
-
-          <div className="flex items-center gap-6 sm:gap-8">
-            <Link
-              href="/privacy-policy"
-              className="hover:text-white transition-colors"
-            >
-              Privacy Policy
-            </Link>
-            <Link
-              href="/terms-and-conditions"
-              className="hover:text-white transition-colors"
-            >
-              Terms & Conditions
-            </Link>
-          </div>
         </div>
       </div>
     </footer>
