@@ -89,6 +89,7 @@ export default function Navbar() {
                 <Link
                   key={link.name}
                   href={link.href}
+                  prefetch={true}
                   className="relative text-sm font-medium text-white/90 hover:text-white transition-colors py-1 group"
                 >
                   {link.name}
@@ -103,7 +104,7 @@ export default function Navbar() {
           </nav>
 
           {/* "Get a Quote" Button - Rounded-[6px] */}
-          <Link href="/contact">
+          <Link href="/contact" prefetch={true}>
             <button className="bg-[#E53935] hover:bg-[#d32f2f] text-white text-xs font-semibold px-5 py-2.5 rounded-[6px] transition-all shadow-md shadow-[#E53935]/40 hover:scale-105 active:scale-95 cursor-pointer">
               Get a Quote
             </button>
@@ -132,6 +133,7 @@ export default function Navbar() {
                 <Link
                   key={link.name}
                   href={link.href}
+                  prefetch={true}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`px-4 py-2.5 rounded-[6px] text-sm font-medium transition-colors ${
                     active
@@ -146,7 +148,11 @@ export default function Navbar() {
           </nav>
 
           <div className="pt-2 border-t border-white/10">
-            <Link href="/contact" onClick={() => setMobileMenuOpen(false)}>
+            <Link
+              href="/contact"
+              prefetch={true}
+              onClick={() => setMobileMenuOpen(false)}
+            >
               <button className="w-full bg-[#E53935] hover:bg-[#d32f2f] text-white text-sm font-semibold py-3 rounded-[6px] transition-all shadow-lg shadow-[#E53935]/30 cursor-pointer">
                 Get a Quote
               </button>

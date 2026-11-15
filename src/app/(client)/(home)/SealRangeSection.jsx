@@ -68,6 +68,7 @@ export default function SealRangeSection({ categories = [] }) {
                 <Link
                   key={category.id}
                   href={href}
+                  prefetch={true}
                   className="group relative bg-white rounded-[6px] p-4.5 sm:p-5 border border-gray-200 shadow-xs hover:shadow-md transition-all duration-300 flex items-center gap-4 sm:gap-5 overflow-hidden"
                 >
                   {/* Left: Category Primary Product Image */}
@@ -116,7 +117,7 @@ export default function SealRangeSection({ categories = [] }) {
 
         {/* Bottom Right "View More" CTA Button */}
         <div className="flex justify-end mt-8 sm:mt-10">
-          <Link href="/products">
+          <Link href="/products" prefetch={true}>
             <button className="border border-[#E53935] text-[#E53935] hover:bg-[#E53935] hover:text-white font-semibold text-xs sm:text-sm px-6 py-2.5 rounded-[6px] transition-all duration-200 cursor-pointer shadow-xs hover:shadow-sm">
               View More
             </button>

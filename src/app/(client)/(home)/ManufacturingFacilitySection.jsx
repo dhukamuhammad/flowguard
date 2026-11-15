@@ -11,7 +11,7 @@ export default function ManufacturingFacilitySection() {
       description:
         "Lorem ipsum dolor sit amet consectetur. Vel fringilla pharetra a at. Pretium placerat magnis dui volutpat porttitor. Rhoncus fringilla dui leo in.",
       image: "/client/home/cnc-machining.jpg",
-      link: "/manufacturing/cnc-machining",
+      link: "/about",
       active: false,
     },
     {
@@ -20,7 +20,7 @@ export default function ManufacturingFacilitySection() {
       description:
         "Lorem ipsum dolor sit amet consectetur. Vel fringilla pharetra a at. Pretium placerat magnis dui volutpat porttitor. Rhoncus fringilla dui leo in.",
       image: "/client/home/quality-testing-labs.png",
-      link: "/manufacturing/quality-testing-labs",
+      link: "/about",
       active: false,
     },
     {
@@ -29,7 +29,7 @@ export default function ManufacturingFacilitySection() {
       description:
         "Lorem ipsum dolor sit amet consectetur. Vel fringilla pharetra a at. Pretium placerat magnis dui volutpat porttitor. Rhoncus fringilla dui leo in.",
       image: "/client/home/skilled-engineering-team.png",
-      link: "/manufacturing/skilled-engineering-team",
+      link: "/about",
       active: false,
     },
     {
@@ -38,7 +38,7 @@ export default function ManufacturingFacilitySection() {
       description:
         "Lorem ipsum dolor sit amet consectetur. Vel fringilla pharetra a at. Pretium placerat.",
       image: "/client/home/continuous-rd.png",
-      link: "/manufacturing/continuous-rd",
+      link: "/about",
       active: true,
     },
   ];
@@ -109,7 +109,7 @@ export default function ManufacturingFacilitySection() {
 
                 {/* Learn More Button - Rounded-[6px] */}
                 <div>
-                  <Link href={item.link}>
+                  <Link href={item.link} prefetch={true}>
                     <button
                       className={`font-semibold text-xs px-5 py-2 rounded-[6px] transition-all duration-200 cursor-pointer shadow-xs hover:shadow-sm ${
                         item.active

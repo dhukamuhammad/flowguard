@@ -64,13 +64,13 @@ export default function HeroBanner() {
 
             {/* Action Buttons - Rounded-[6px] Compact & Sleek */}
             <div className="flex flex-wrap items-center gap-3.5 pt-1.5">
-              <Link href="/products">
+              <Link href="/products" prefetch={true}>
                 <button className="bg-[#E53935] hover:bg-[#d32f2f] text-white text-xs sm:text-sm font-semibold px-6 py-2.5 rounded-[6px] shadow-lg shadow-[#E53935]/35 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer">
                   Explore Products
                 </button>
               </Link>
 
-              <Link href="/about">
+              <Link href="/contact" prefetch={true}>
                 <button className="bg-black/30 backdrop-blur-sm border border-white/30 hover:border-white/60 text-[#F8FAFC] text-xs sm:text-sm font-semibold px-6 py-2.5 rounded-[6px] hover:bg-white/10 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer">
                   Get a Quote
                 </button>

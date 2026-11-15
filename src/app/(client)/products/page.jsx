@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import ProductHeroBanner from "./ProductHeroBanner";
 import ProductCatalogSection from "./ProductCatalogSection";
 import ProductCtaBanner from "./ProductCtaBanner";
@@ -11,9 +12,8 @@ export const metadata = {
     "Precision engineered industrial sealing solutions for critical applications across diverse industries.",
 };
 
-export default async function ProductsPage({ searchParams }) {
+async function ProductCatalogLoader({ categories, products, searchParams }) {
   const resolvedSearchParams = await searchParams;
-  const { categories, products } = await getActiveCatalogData();
   const { initialCategoryId, initialProductId } = resolveCatalogSelection({
     categories,
     products,
@@ -21,15 +21,38 @@ export default async function ProductsPage({ searchParams }) {
   });
 
   return (
+    <ProductCatalogSection
+      key={`${initialCategoryId ?? "none"}-${initialProductId ?? "none"}`}
+      categories={categories}
+      products={products}
+      initialCategoryId={initialCategoryId}
+      initialProductId={initialProductId}
+    />
+  );
+}
+
+export default async function ProductsPage({ searchParams }) {
+  const { categories, products } = await getActiveCatalogData();
+
+  return (
     <main className="bg-white min-h-screen">
       <ProductHeroBanner />
-      <ProductCatalogSection
-        key={`${initialCategoryId ?? "none"}-${initialProductId ?? "none"}`}
-        categories={categories}
-        products={products}
-        initialCategoryId={initialCategoryId}
-        initialProductId={initialProductId}
-      />
+      <Suspense
+        fallback={
+          <ProductCatalogSection
+            categories={categories}
+            products={products}
+            initialCategoryId={categories[0]?.id || null}
+            initialProductId={null}
+          />
+        }
+      >
+        <ProductCatalogLoader
+          categories={categories}
+          products={products}
+          searchParams={searchParams}
+        />
+      </Suspense>
       <ProductCtaBanner />
     </main>
   );
