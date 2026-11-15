@@ -174,8 +174,9 @@ export default function AdminDashboardPage() {
     ...categories.map((c) => Number(c.products_count) || 0)
   );
 
+  const recentCategories = categories.slice(0, 5);
   const recentInquiries = inquiries.slice(0, 5);
-  const recentProducts = products.slice(0, 4);
+  const recentProducts = products.slice(0, 5);
 
   return (
     <>
@@ -408,6 +409,7 @@ export default function AdminDashboardPage() {
               </div>
               <Link
                 href="/admin/category"
+                prefetch={true}
                 className="text-xs font-semibold text-[#E53935] hover:underline flex items-center gap-1"
               >
                 <span>All Categories</span>
@@ -425,8 +427,8 @@ export default function AdminDashboardPage() {
                 No categories created yet.
               </p>
             ) : (
-              <div className="space-y-2.5 max-h-40 overflow-y-auto pr-1">
-                {categories.map((cat) => {
+              <div className="space-y-2.5">
+                {recentCategories.map((cat) => {
                   const count = Number(cat.products_count) || 0;
                   const widthPct =
                     count > 0 ? Math.max(12, Math.round((count / maxCatProducts) * 100)) : 0;
@@ -492,6 +494,7 @@ export default function AdminDashboardPage() {
               </div>
               <Link
                 href="/admin/inquiries"
+                prefetch={true}
                 className="text-xs font-semibold text-[#E53935] hover:underline flex items-center gap-1"
               >
                 <span>View All</span>
@@ -589,6 +592,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <Link
                   href="/admin/product"
+                  prefetch={true}
                   className="text-xs font-semibold text-[#E53935] hover:underline flex items-center gap-1"
                 >
                   <span>Manage</span>
