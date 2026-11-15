@@ -1,10 +1,9 @@
+import { Suspense } from "react";
 import ContactHeroBanner from "./ContactHeroBanner";
 import ContactFormSection from "./ContactFormSection";
 import ContactResponseTimeline from "./ContactResponseTimeline";
 import ContactDepartmentDirectory from "./ContactDepartmentDirectory";
 import ContactVisitingGuide from "./ContactVisitingGuide";
-
-export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Contact Us & Request a Quote | Flow Guard EngTech Industries",
@@ -12,22 +11,18 @@ export const metadata = {
     "Direct contact with Flow Guard application engineers for mechanical seal selection, fast RFQs, custom cartridge drawings, and Gujarat plant visits.",
 };
 
-export default async function ContactPage({ searchParams }) {
-  const resolvedSearchParams = await searchParams;
-  const initialProduct =
-    typeof resolvedSearchParams?.product === "string"
-      ? resolvedSearchParams.product
-      : "";
-
+export default function ContactPage() {
   return (
     <main className="bg-white min-h-screen">
       {/* 1. Sleek Hero Banner */}
       <ContactHeroBanner />
 
-      {/* 2. Main Signature Contact & Quote Form Section */}
-      <ContactFormSection initialProduct={initialProduct} />
+      {/* 2. Main Signature Contact & Quote Form Section with Suspense for URL params */}
+      <Suspense fallback={<div className="min-h-[400px] bg-white" />}>
+        <ContactFormSection />
+      </Suspense>
 
-      {/* 3. Inquiry Response Timeline (Connected directly to form submission) */}
+      {/* 3. Inquiry Response Timeline */}
       <ContactResponseTimeline />
 
       {/* 4. Department Directory (Commercial, Engineering, Lab, Admin) */}

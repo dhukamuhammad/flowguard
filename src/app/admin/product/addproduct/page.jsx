@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import AdminNavbar from "@/components/admin/AdminNavbar";
 import ProductForm from "@/components/admin/product/ProductForm";
 import { notify } from "@/components/common/AppToaster";
+import { invalidateAdminCache } from "@/lib/adminCache";
 
 function AddProductContent() {
   const router = useRouter();
@@ -83,6 +84,7 @@ function AddProductContent() {
         throw new Error(data.error || "Failed to save product.");
       }
 
+      invalidateAdminCache("products");
       notify.success(
         isEditing
           ? "Product updated successfully"

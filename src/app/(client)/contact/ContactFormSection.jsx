@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Phone,
   Mail,
@@ -24,9 +25,12 @@ const EMPTY_FORM = {
 };
 
 export default function ContactFormSection({ initialProduct = "" }) {
+  const searchParams = useSearchParams();
+  const productParam = searchParams?.get("product") || "";
+
   const [form, setForm] = useState({
     ...EMPTY_FORM,
-    product: initialProduct || "",
+    product: productParam || initialProduct || "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");

@@ -9,7 +9,8 @@ import TestimonialsSection from "./TestimonialsSection";
 import ContactSection from "./ContactSection";
 import { getActiveCatalogData } from "@/lib/catalog";
 
-export const dynamic = "force-dynamic";
+// Enable ISR so Homepage is pre-rendered and served from edge cache instantly (0s delay)
+export const revalidate = 60;
 
 export default async function HomePage() {
   const { categories } = await getActiveCatalogData();

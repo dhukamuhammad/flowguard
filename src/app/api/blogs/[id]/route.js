@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { slugify } from "@/lib/blogUtils";
 
@@ -144,6 +145,10 @@ export async function PATCH(request, { params }) {
       );
     }
 
+    try {
+      revalidatePath("/blog");
+    } catch {}
+
     return NextResponse.json({
       success: true,
       blog: data?.[0] || null,
@@ -176,6 +181,10 @@ export async function DELETE(request, { params }) {
         { status: 500 }
       );
     }
+
+    try {
+      revalidatePath("/blog");
+    } catch {}
 
     return NextResponse.json({ success: true });
   } catch (err) {

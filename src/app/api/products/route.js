@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
+import { clearCatalogCache } from "@/lib/catalog";
 import {
   slugify,
   normalizeStringArray,
@@ -120,6 +122,13 @@ export async function POST(request) {
         { status: 500 }
       );
     }
+
+    clearCatalogCache();
+    try {
+      revalidatePath("/");
+      revalidatePath("/products");
+      revalidatePath("/product");
+    } catch {}
 
     return NextResponse.json(
       { success: true, product: data[0] },

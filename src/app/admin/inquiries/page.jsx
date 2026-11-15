@@ -33,10 +33,16 @@ import {
   formatInquiryRef,
   updateInquiryStatusRequest,
 } from "@/lib/inquiryUtils";
+import {
+  fetchAdminData,
+  getCachedAdminData,
+  invalidateAdminCache,
+} from "@/lib/adminCache";
 
 export default function AdminInquiriesPage() {
-  const [inquiries, setInquiries] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedAdminData("/api/inquiries");
+  const [inquiries, setInquiries] = useState(cached?.inquiries || []);
+  const [loading, setLoading] = useState(!cached);
   const [pageError, setPageError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -53,12 +59,11 @@ export default function AdminInquiriesPage() {
 
     async function fetchInquiries() {
       try {
-        const res = await fetch("/api/inquiries", { cache: "no-store" });
-        const data = await res.json();
+        const data = await fetchAdminData("/api/inquiries");
         if (!active) return;
 
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || "Failed to load inquiries.");
+        if (!data || !data.success) {
+          throw new Error(data?.error || "Failed to load inquiries.");
         }
 
         setPageError("");
@@ -108,7 +113,7 @@ export default function AdminInquiriesPage() {
       setUpdatingId(id);
       setPageError("");
       const updated = await updateInquiryStatusRequest(id, newStatus);
-
+      invalidateAdminCache("inquiries");
       setInquiries((prev) =>
         prev.map((item) => (item.id === id ? updated : item))
       );
@@ -142,6 +147,7 @@ export default function AdminInquiriesPage() {
       setInquiries((prev) =>
         prev.filter((item) => item.id !== inquiryToDelete.id)
       );
+      invalidateAdminCache("inquiries");
       if (selectedInquiry?.id === inquiryToDelete.id) {
         setSelectedInquiry(null);
       }

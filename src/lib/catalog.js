@@ -10,6 +10,15 @@ export const DEFAULT_CATEGORY_THUMB = "/client/home/seal-product.png";
 export const DEFAULT_PRODUCT_IMAGE = "/client/product/Seals.png";
 export const DEFAULT_SIDEBAR_THUMB = "/client/oue mechanicle.png";
 
+let catalogCache = null;
+let catalogCacheTime = 0;
+const CATALOG_CACHE_TTL = 60 * 1000; // 60s in-memory cache
+
+export function clearCatalogCache() {
+  catalogCache = null;
+  catalogCacheTime = 0;
+}
+
 /**
  * Normalizes a single database product row so client components receive
  * strictly typed arrays/strings without null surprises.
@@ -37,6 +46,10 @@ function normalizeProduct(row) {
  * directly from Supabase. Products belonging to inactive categories are excluded.
  */
 export async function getActiveCatalogData() {
+  if (catalogCache && Date.now() - catalogCacheTime < CATALOG_CACHE_TTL) {
+    return catalogCache;
+  }
+
   try {
     const [{ data: categoryRows, error: catErr }, { data: productRows, error: prodErr }] =
       await Promise.all([
@@ -83,10 +96,13 @@ export async function getActiveCatalogData() {
       };
     });
 
-    return {
+    const result = {
       categories: enrichedCategories,
       products: normalizedProducts,
     };
+    catalogCache = result;
+    catalogCacheTime = Date.now();
+    return result;
   } catch (err) {
     console.error("Unexpected error loading active catalog:", err);
     return { categories: [], products: [] };

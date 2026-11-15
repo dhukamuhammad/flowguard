@@ -3,7 +3,8 @@ import BlogCatalogClient from "./BlogCatalogClient";
 import { supabase } from "@/lib/supabase";
 import { STATIC_BLOGS } from "@/data/staticBlogs";
 
-export const dynamic = "force-dynamic";
+// Enable ISR so Blog page is served instantly from Edge cache
+export const revalidate = 60;
 
 export const metadata = {
   title: "Engineering Blog & Sealing Guides | Flow Guard EngTech Industries",

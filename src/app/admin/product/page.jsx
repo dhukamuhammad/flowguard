@@ -26,14 +26,23 @@ import {
   paginateItems,
 } from "@/components/admin/AdminPagination";
 import { notify } from "@/components/common/AppToaster";
+import {
+  fetchAdminData,
+  getCachedAdminData,
+  invalidateAdminCache,
+} from "@/lib/adminCache";
 
 function AdminProductsContent() {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("category") || "ALL";
 
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cachedProd = getCachedAdminData("/api/products");
+  const cachedCat = getCachedAdminData("/api/categories");
+  const hasCache = Boolean(cachedProd && cachedCat);
+
+  const [products, setProducts] = useState(cachedProd?.products || []);
+  const [categories, setCategories] = useState(cachedCat?.categories || []);
+  const [loading, setLoading] = useState(!hasCache);
   const [pageError, setPageError] = useState("");
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,25 +62,20 @@ function AdminProductsContent() {
 
     async function fetchData() {
       try {
-        const [prodRes, catRes] = await Promise.all([
-          fetch("/api/products", { cache: "no-store" }),
-          fetch("/api/categories", { cache: "no-store" }),
-        ]);
-
         const [prodData, catData] = await Promise.all([
-          prodRes.json(),
-          catRes.json(),
+          fetchAdminData("/api/products"),
+          fetchAdminData("/api/categories"),
         ]);
 
         if (!active) return;
 
-        if (!prodRes.ok || !prodData.success) {
-          throw new Error(prodData.error || "Failed to load products.");
+        if (!prodData || !prodData.success) {
+          throw new Error(prodData?.error || "Failed to load products.");
         }
 
         setPageError("");
         setProducts(prodData.products || []);
-        setCategories(catData.success ? catData.categories || [] : []);
+        setCategories(catData?.success ? catData.categories || [] : []);
       } catch (err) {
         if (!active) return;
         setPageError(err.message || "Unable to load product inventory.");
@@ -113,6 +117,7 @@ function AdminProductsContent() {
       setProducts((prev) =>
         prev.map((p) => (p.id === item.id ? data.product : p))
       );
+      invalidateAdminCache("products");
       notify.success(
         `"${item.title}" is now ${nextStatus === 1 ? "ON (Active)" : "OFF (Hidden)"}`
       );
@@ -147,6 +152,7 @@ function AdminProductsContent() {
       }
 
       setProducts((prev) => prev.filter((p) => p.id !== productToDelete.id));
+      invalidateAdminCache("products");
       notify.success(`Product "${productToDelete.title}" deleted`);
       setProductToDelete(null);
     } catch (err) {

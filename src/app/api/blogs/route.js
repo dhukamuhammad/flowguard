@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { validateBlogPayload } from "@/lib/blogUtils";
 
@@ -69,6 +70,10 @@ export async function POST(request) {
         { status: 500 }
       );
     }
+
+    try {
+      revalidatePath("/blog");
+    } catch {}
 
     return NextResponse.json(
       { success: true, blog: data?.[0] || null },

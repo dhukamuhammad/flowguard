@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
+import { clearCatalogCache } from "@/lib/catalog";
 
 /**
  * Validates and converts route id param into a positive integer.
@@ -82,6 +84,12 @@ export async function PATCH(request, { params }) {
       );
     }
 
+    clearCatalogCache();
+    try {
+      revalidatePath("/");
+      revalidatePath("/products");
+    } catch {}
+
     return NextResponse.json({ success: true, category: data[0] });
   } catch (err) {
     return NextResponse.json(
@@ -132,6 +140,12 @@ export async function DELETE(_request, { params }) {
         { status: 404 }
       );
     }
+
+    clearCatalogCache();
+    try {
+      revalidatePath("/");
+      revalidatePath("/products");
+    } catch {}
 
     return NextResponse.json({
       success: true,

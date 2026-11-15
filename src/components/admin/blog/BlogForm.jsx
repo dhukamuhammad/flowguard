@@ -15,6 +15,7 @@ import {
 import { slugify } from "@/lib/blogUtils";
 import BlogDescriptionEditor from "./BlogDescriptionEditor";
 import { notify } from "@/components/common/AppToaster";
+import { invalidateAdminCache } from "@/lib/adminCache";
 
 export default function BlogForm({ blogToEdit = null }) {
   const router = useRouter();
@@ -144,6 +145,7 @@ export default function BlogForm({ blogToEdit = null }) {
         throw new Error(data.error || "Failed to save blog post.");
       }
 
+      invalidateAdminCache("blogs");
       notify.success(
         isEditing
           ? `Blog "${cleanTitle}" updated successfully.`

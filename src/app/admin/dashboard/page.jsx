@@ -28,28 +28,27 @@ import {
   formatInquiryRef,
   updateInquiryStatusRequest,
 } from "@/lib/inquiryUtils";
+import {
+  fetchAdminData,
+  getCachedAdminData,
+  invalidateAdminCache,
+} from "@/lib/adminCache";
 
-async function fetchDashboardPayload() {
-  const [inqRes, prodRes, catRes] = await Promise.all([
-    fetch("/api/inquiries", { cache: "no-store" }),
-    fetch("/api/products", { cache: "no-store" }),
-    fetch("/api/categories", { cache: "no-store" }),
-  ]);
-
+async function fetchDashboardPayload(force = false) {
   const [inqData, prodData, catData] = await Promise.all([
-    inqRes.json(),
-    prodRes.json(),
-    catRes.json(),
+    fetchAdminData("/api/inquiries", { force }),
+    fetchAdminData("/api/products", { force }),
+    fetchAdminData("/api/categories", { force }),
   ]);
 
-  if (!inqRes.ok || !inqData.success) {
-    throw new Error(inqData.error || "Failed to load inquiries.");
+  if (!inqData?.success) {
+    throw new Error(inqData?.error || "Failed to load inquiries.");
   }
-  if (!prodRes.ok || !prodData.success) {
-    throw new Error(prodData.error || "Failed to load products.");
+  if (!prodData?.success) {
+    throw new Error(prodData?.error || "Failed to load products.");
   }
-  if (!catRes.ok || !catData.success) {
-    throw new Error(catData.error || "Failed to load categories.");
+  if (!catData?.success) {
+    throw new Error(catData?.error || "Failed to load categories.");
   }
 
   return {
@@ -66,10 +65,15 @@ function shouldSkipImageOptimization(src) {
 }
 
 export default function AdminDashboardPage() {
-  const [inquiries, setInquiries] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cachedInq = getCachedAdminData("/api/inquiries");
+  const cachedProd = getCachedAdminData("/api/products");
+  const cachedCat = getCachedAdminData("/api/categories");
+  const hasCache = Boolean(cachedInq && cachedProd && cachedCat);
+
+  const [inquiries, setInquiries] = useState(cachedInq?.inquiries || []);
+  const [products, setProducts] = useState(cachedProd?.products || []);
+  const [categories, setCategories] = useState(cachedCat?.categories || []);
+  const [loading, setLoading] = useState(!hasCache);
   const [refreshing, setRefreshing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -104,7 +108,7 @@ export default function AdminDashboardPage() {
   const handleRefresh = async () => {
     try {
       setRefreshing(true);
-      const data = await fetchDashboardPayload();
+      const data = await fetchDashboardPayload(true);
       setErrorMsg("");
       setInquiries(data.inquiries);
       setProducts(data.products);
@@ -123,6 +127,7 @@ export default function AdminDashboardPage() {
     try {
       setUpdatingId(id);
       const updated = await updateInquiryStatusRequest(id, newStatus);
+      invalidateAdminCache("inquiries");
       setInquiries((prev) =>
         prev.map((item) => (item.id === id ? updated : item))
       );

@@ -16,17 +16,23 @@ import {
 import AdminNavbar from "@/components/admin/AdminNavbar";
 import { notify } from "@/components/common/AppToaster";
 import { formatShortDate } from "@/lib/utils";
+import {
+  fetchAdminData,
+  getCachedAdminData,
+  invalidateAdminCache,
+} from "@/lib/adminCache";
 
 export default function AdminSettingsPage() {
-  const [admin, setAdmin] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedAdminData("/api/admin/settings");
+  const [admin, setAdmin] = useState(cached?.admin || null);
+  const [loading, setLoading] = useState(!cached);
   const [errorMsg, setErrorMsg] = useState("");
   const [showViewPassword, setShowViewPassword] = useState(false);
 
   // Edit mode state (Single Account Edit-Only — no Delete / Add)
   const [isEditing, setIsEditing] = useState(false);
-  const [usernameInput, setUsernameInput] = useState("");
-  const [passwordInput, setPasswordInput] = useState("");
+  const [usernameInput, setUsernameInput] = useState(cached?.admin?.username || "");
+  const [passwordInput, setPasswordInput] = useState(cached?.admin?.password || "");
   const [showEditPassword, setShowEditPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -35,12 +41,11 @@ export default function AdminSettingsPage() {
 
     async function loadAccount() {
       try {
-        const res = await fetch("/api/admin/settings", { cache: "no-store" });
-        const data = await res.json();
+        const data = await fetchAdminData("/api/admin/settings");
         if (!active) return;
 
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || "Failed to load admin settings.");
+        if (!data || !data.success) {
+          throw new Error(data?.error || "Failed to load admin settings.");
         }
 
         setErrorMsg("");
@@ -120,6 +125,7 @@ export default function AdminSettingsPage() {
       }
 
       setAdmin(data.admin);
+      invalidateAdminCache("settings");
       setPasswordInput(data.admin?.password || "");
       setShowViewPassword(false);
       setShowEditPassword(false);

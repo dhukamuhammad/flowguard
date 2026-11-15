@@ -12,10 +12,16 @@ import {
   paginateItems,
 } from "@/components/admin/AdminPagination";
 import { notify } from "@/components/common/AppToaster";
+import {
+  fetchAdminData,
+  getCachedAdminData,
+  invalidateAdminCache,
+} from "@/lib/adminCache";
 
 export default function AdminBlogPage() {
-  const [blogs, setBlogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedAdminData("/api/blogs");
+  const [blogs, setBlogs] = useState(cached?.blogs || []);
+  const [loading, setLoading] = useState(!cached);
   const [pageError, setPageError] = useState("");
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -32,12 +38,11 @@ export default function AdminBlogPage() {
 
     async function fetchBlogs() {
       try {
-        const res = await fetch("/api/blogs", { cache: "no-store" });
-        const data = await res.json();
+        const data = await fetchAdminData("/api/blogs");
         if (!active) return;
 
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || "Failed to load blog posts.");
+        if (!data || !data.success) {
+          throw new Error(data?.error || "Failed to load blog posts.");
         }
 
         setPageError("");
@@ -73,6 +78,7 @@ export default function AdminBlogPage() {
       }
 
       setBlogs((prev) => prev.filter((b) => b.id !== blogToDelete.id));
+      invalidateAdminCache("blogs");
       notify.success(`Blog "${blogToDelete.title}" deleted`);
       setBlogToDelete(null);
     } catch (err) {

@@ -27,10 +27,16 @@ import AdminPagination, {
 } from "@/components/admin/AdminPagination";
 import { formatShortDate } from "@/lib/utils";
 import { notify } from "@/components/common/AppToaster";
+import {
+  fetchAdminData,
+  getCachedAdminData,
+  invalidateAdminCache,
+} from "@/lib/adminCache";
 
 export default function AdminCategoriesPage() {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedAdminData("/api/categories");
+  const [categories, setCategories] = useState(cached?.categories || []);
+  const [loading, setLoading] = useState(!cached);
   const [pageError, setPageError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -54,12 +60,11 @@ export default function AdminCategoriesPage() {
 
     async function fetchCategories() {
       try {
-        const res = await fetch("/api/categories", { cache: "no-store" });
-        const data = await res.json();
+        const data = await fetchAdminData("/api/categories");
         if (!active) return;
 
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || "Failed to load categories.");
+        if (!data || !data.success) {
+          throw new Error(data?.error || "Failed to load categories.");
         }
         setPageError("");
         setCategories(data.categories || []);
@@ -155,6 +160,7 @@ export default function AdminCategoriesPage() {
         notify.success(`Category "${trimmed}" created`);
       }
 
+      invalidateAdminCache("categories");
       setIsModalOpen(false);
     } catch (err) {
       const msg = err.message || "Something went wrong.";
@@ -193,6 +199,7 @@ export default function AdminCategoriesPage() {
       setCategories((prev) =>
         prev.map((c) => (c.id === cat.id ? { ...c, ...data.category } : c))
       );
+      invalidateAdminCache("categories");
       notify.success(
         `"${cat.title}" is now ${nextStatus === 1 ? "ON (Active)" : "OFF (Hidden)"}`
       );
@@ -230,6 +237,7 @@ export default function AdminCategoriesPage() {
       setCategories((prev) =>
         prev.filter((c) => c.id !== categoryToDelete.id)
       );
+      invalidateAdminCache("categories");
       notify.success(`Category "${categoryToDelete.title}" deleted`);
       setCategoryToDelete(null);
     } catch (err) {

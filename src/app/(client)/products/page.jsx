@@ -3,7 +3,7 @@ import ProductCatalogSection from "./ProductCatalogSection";
 import ProductCtaBanner from "./ProductCtaBanner";
 import { getActiveCatalogData, resolveCatalogSelection } from "@/lib/catalog";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata = {
   title: "Mechanical Seals | Flow Guard EngTech Industries",

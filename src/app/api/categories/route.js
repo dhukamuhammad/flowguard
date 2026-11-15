@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
+import { clearCatalogCache } from "@/lib/catalog";
 
 export async function GET(request) {
   try {
@@ -15,7 +17,11 @@ export async function GET(request) {
       query = query.eq("status", Number(statusParam));
     }
 
-    const { data: categories, error } = await query;
+    const [{ data: categories, error }, { data: productRows }] =
+      await Promise.all([
+        query,
+        supabase.from("products").select("category_id"),
+      ]);
 
     if (error) {
       return NextResponse.json(
@@ -23,11 +29,6 @@ export async function GET(request) {
         { status: 500 }
       );
     }
-
-    // Fetch linked product counts per category
-    const { data: productRows } = await supabase
-      .from("products")
-      .select("category_id");
 
     const countsByCategory = {};
     if (Array.isArray(productRows)) {
@@ -81,6 +82,12 @@ export async function POST(request) {
         { status: 500 }
       );
     }
+
+    clearCatalogCache();
+    try {
+      revalidatePath("/");
+      revalidatePath("/products");
+    } catch {}
 
     return NextResponse.json(
       {
